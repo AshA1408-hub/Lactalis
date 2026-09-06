@@ -6,6 +6,9 @@ import streamlit as st
 import pandas as pd
 from github import Github
 
+# Ссылка на логотип Lactalis для главной страницы
+LOGO_URL = "https://images.seeklogo.com/logo-png/8/2/lactalis-logo-png_seeklogo-81708.png"
+
 QUESTIONS = [
     {
         "question": (
@@ -287,7 +290,7 @@ st.markdown(
     """
     <style>
     .stApp {
-        background-color: #0088cc !important;
+        background-color: #0072b1 !important;
         color: #ffffff !important;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
@@ -318,42 +321,56 @@ st.markdown(
     }
     .step-badge {
         display: inline-block;
-        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        background: linear-gradient(135deg, #004F84 0%, #0072b1 100%);
         color: white;
         padding: 8px 18px;
         border-radius: 12px;
         font-weight: 700;
-        font-size: 18px;
-        box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);
+        font-size: 16px;
+        box-shadow: 0 4px 10px rgba(0, 79, 132, 0.3);
         margin-bottom: 10px;
     }
     .stButton>button {
-        background: linear-gradient(135deg, #f59e0b 0%, #e11d48 100%) !important;
+        background: linear-gradient(135deg, #004F84 0%, #0072b1 100%) !important;
         color: white !important;
         border-radius: 12px;
         padding: 12px 28px;
         font-weight: 700;
         border: none !important;
-        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        box-shadow: 0 4px 15px rgba(0, 79, 132, 0.4);
         transition: all 0.3s ease;
         width: 100%;
         font-size: 16px;
     }
     .stButton>button:hover {
-        background: linear-gradient(135deg, #d97706 0%, #be123c 100%) !important;
-        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+        background: linear-gradient(135deg, #003a61 0%, #005c93 100%) !important;
+        box-shadow: 0 6px 20px rgba(0, 79, 132, 0.6);
         transform: translateY(-2px);
     }
     [data-testid="stSidebar"] {
-        background-color: #0072b1 !important;
+        background-color: #004F84 !important;
         border-right: 1px solid rgba(255, 255, 255, 0.1);
     }
     [data-testid="stSidebar"] * {
         color: #ffffff !important;
     }
     .stProgress > div > div > div > div {
-        background: linear-gradient(90deg, #f59e0b, #10b981);
+        background: linear-gradient(90deg, #004F84, #10b981);
         border-radius: 10px;
+    }
+    /* Стили для разделения вариантов ответов */
+    .stRadio div[role="radiogroup"] > label {
+        background-color: #f8fafc !important;
+        padding: 12px 16px !important;
+        border-radius: 10px !important;
+        margin-bottom: 12px !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        transition: all 0.2s ease;
+    }
+    .stRadio div[role="radiogroup"] > label:hover {
+        background-color: #f1f5f9 !important;
+        border-color: #0072b1 !important;
     }
     .exp-correct {
         background-color: #f0fdf4 !important;
@@ -378,7 +395,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- СОХРАНЕНИЕ В CSV НА GITHUB ЧЕРЕЗ PANDAS ---
+
 def save_to_github(row_data):
   try:
     token = st.secrets["github"]["token"]
@@ -388,9 +405,17 @@ def save_to_github(row_data):
     g = Github(token)
     repo = g.get_repo(repo_name)
 
-    columns = ["Timestamp", "Имя", "Должность", "Попытка", "Правильных ответов", "Всего", "Процент", "Статус"]
-    
-    # Пытаемся получить существующий файл
+    columns = [
+        "Timestamp",
+        "Имя",
+        "Должность",
+        "Попытка",
+        "Правильных ответов",
+        "Всего",
+        "Процент",
+        "Статус",
+    ]
+
     try:
       file_content = repo.get_contents(path)
       sha = file_content.sha
@@ -400,14 +425,13 @@ def save_to_github(row_data):
       sha = None
       df = pd.DataFrame(columns=columns)
 
-    # Добавляем новую строчку через DataFrame, чтобы избежать сбоев разделителей
     new_row_df = pd.DataFrame([row_data], columns=columns)
     df = pd.concat([df, new_row_df], ignore_index=True)
 
-    # Конвертируем обратно в CSV текст с правильной кодировкой
     csv_content = df.to_csv(index=False, encoding="utf-8-sig")
-
-    content_encoded = base64.b64encode(csv_content.encode("utf-8-sig")).decode("utf-8")
+    content_encoded = base64.b64encode(csv_content.encode("utf-8-sig")).decode(
+        "utf-8"
+    )
 
     if sha:
       repo.update_file(path, "Update test results", content_encoded, sha)
@@ -421,70 +445,71 @@ def save_to_github(row_data):
 
 
 # --- БЛОК АДМИНИСТРАТОРА В БОКОВОЙ ПАНЕЛИ ---
-st.sidebar.markdown('---')
-st.sidebar.subheader('👨‍💻 Панель руководителя')
+st.sidebar.markdown("---")
+st.sidebar.subheader("👨‍💻 Панель руководителя")
 
-if 'admin_logged_in' not in st.session_state:
+if "admin_logged_in" not in st.session_state:
   st.session_state.admin_logged_in = False
 
 if not st.session_state.admin_logged_in:
-  password_input = st.sidebar.text_input('Введите пароль', type='password')
-  if st.sidebar.button('Войти'):
+  password_input = st.sidebar.text_input("Введите пароль", type="password")
+  if st.sidebar.button("Войти"):
     admin_pass = (
-        st.secrets['admin']['password']
-        if 'admin' in st.secrets and 'password' in st.secrets['admin']
-        else '12345'
+        st.secrets["admin"]["password"]
+        if "admin" in st.secrets and "password" in st.secrets["admin"]
+        else "12345"
     )
     if password_input == admin_pass:
       st.session_state.admin_logged_in = True
-      st.sidebar.success('Успешный вход!')
+      st.sidebar.success("Успешный вход!")
       st.rerun()
     else:
-      st.sidebar.error('Неверный пароль')
+      st.sidebar.error("Неверный пароль")
 else:
-  if st.sidebar.button('Выйти из кабинета'):
+  if st.sidebar.button("Выйти из кабинета"):
     st.session_state.admin_logged_in = False
     st.rerun()
 
-  st.sidebar.success('Доступ разрешен')
+  st.sidebar.success("Доступ разрешен")
 
-# --- ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ ДЛЯ АДМИНА ---
 if st.session_state.admin_logged_in:
-  st.header('📊 Сводная таблица результатов тестирования')
+  st.header("📊 Сводная таблица результатов тестирования")
 
   try:
-    token = st.secrets['github']['token']
-    repo_name = st.secrets['github']['repo']
+    token = st.secrets["github"]["token"]
+    repo_name = st.secrets["github"]["repo"]
 
     g = Github(token)
     repo = g.get_repo(repo_name)
-    file_content = repo.get_contents('results.csv')
-    data = file_content.decoded_content.decode('utf-8-sig')
+    file_content = repo.get_contents("results.csv")
+    data = file_content.decoded_content.decode("utf-8-sig")
 
     df = pd.read_csv(StringIO(data))
 
-    search_query = st.text_input('🔍 Поиск по ФИО или должности')
+    search_query = st.text_input("🔍 Поиск по ФИО или должности")
     if search_query:
       df = df[
           df.astype(str)
-          .apply(lambda row: row.str.contains(search_query, case=False).any(),
-                 axis=1)
+          .apply(
+              lambda row: row.str.contains(search_query, case=False).any(),
+              axis=1,
+          )
       ]
 
     st.dataframe(df, use_container_width=True)
 
-    csv_data = df.to_csv(index=False).encode('utf-8-sig')
+    csv_data = df.to_csv(index=False).encode("utf-8-sig")
     st.download_button(
-        label='📥 Скачать отчет в формате CSV (Excel)',
+        label="📥 Скачать отчет в формате CSV (Excel)",
         data=csv_data,
-        file_name='results_report.csv',
-        mime='text/csv',
+        file_name="results_report.csv",
+        mime="text/csv",
     )
 
   except Exception as e:
     st.info(
-        'Файл результатов (`results.csv`) пока пуст или еще не создан. Как'
-        ' только кто-то пройдет тест, здесь появится таблица.'
+        "Файл результатов (`results.csv`) пока пуст или еще не создан. Как"
+        " только кто-то пройдет тест, здесь появится таблица."
     )
 
 if "step" not in st.session_state:
@@ -506,9 +531,14 @@ if "answered" not in st.session_state:
 
 # --- ШАГ 1: РЕГИСТРАЦИЯ ---
 if st.session_state.step == "register":
+  # Вывод логотипа компании по ссылке
+  col1, col2, col3 = st.columns([1, 2, 1])
+  with col2:
+    st.image(LOGO_URL, use_container_width=True)
+
   st.markdown(
-      "<div style='text-align: center; padding: 10px 0 0 0;'><div"
-      " class='step-badge'>LACTALIS</div><h1"
+      "<div style='text-align: center; padding: 5px 0 10px"
+      " 0;'><h1"
       " style='color:white;font-weight:800;letter-spacing:-0.5px;margin-bottom:5px;'>ЗДОРОВЬЕ"
       " И БЕЗОПАСНОСТЬ</h1><p>Модуль интерактивной проверки знаний</p></div>",
       unsafe_allow_html=True,
