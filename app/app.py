@@ -472,7 +472,7 @@ if st.session_state.admin_logged_in:
     data = file_content.decoded_content.decode('utf-8')
 
     # Превращаем в DataFrame
-    df = pd.read_csv(StringIO(data))
+    df = pd.read_csv(StringIO(data), encoding='utf-8-sig')
 
     # Красивые фильтры и поисковая строка
     search_query = st.text_input('🔍 Поиск по ФИО или должности')
