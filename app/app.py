@@ -6,7 +6,7 @@ import streamlit as st
 import pandas as pd
 from github import Github
 
-# Ссылка на логотип Lactalis для главной страницы
+# Ссылка на логотип Lactalis
 LOGO_URL = "https://images.seeklogo.com/logo-png/8/2/lactalis-logo-png_seeklogo-81708.png"
 
 QUESTIONS = [
@@ -289,44 +289,34 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    .stApp {
-        background-color: #0072b1 !important;
-        color: #ffffff !important;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
     header {visibility: hidden;}
     
-    /* Универсальный стиль текста для всех элементов интерфейса */
-    p, span, label, div, h1, h2, h3, h4, .stRadio label {
-        color: #ffffff !important;
-    }
-    
-    .stMarkdown p {
-        color: rgba(255, 255, 255, 0.95) !important;
-        font-size: 16px;
-    }
-    
-    input[type="text"], input {
-        background-color: #f8fafc !important;
-        color: #1e293b !important;
-        -webkit-text-fill-color: #1e293b !important;
-        border: 2px solid #cbd5e1 !important;
-        border-radius: 10px !important;
-        font-size: 16px !important;
-    }
-    
+    /* Бейджик шага */
     .step-badge {
         display: inline-block;
         background: linear-gradient(135deg, #004F84 0%, #0072b1 100%);
-        color: white;
-        padding: 8px 18px;
-        border-radius: 12px;
+        color: white !important;
+        padding: 6px 16px;
+        border-radius: 10px;
         font-weight: 700;
-        font-size: 16px;
-        box-shadow: 0 4px 10px rgba(0, 79, 132, 0.3);
-        margin-bottom: 10px;
+        font-size: 14px;
+        margin-bottom: 12px;
     }
     
+    /* Контейнер для логотипа с безупречным белым фоном */
+    .logo-container {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        text-align: center;
+        margin-bottom: 25px;
+        max-width: 240px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    /* Кнопки */
     .stButton>button {
         background: linear-gradient(135deg, #004F84 0%, #0072b1 100%) !important;
         color: white !important;
@@ -334,80 +324,42 @@ st.markdown(
         padding: 12px 28px;
         font-weight: 700;
         border: none !important;
-        box-shadow: 0 4px 15px rgba(0, 79, 132, 0.4);
+        box-shadow: 0 4px 15px rgba(0, 79, 132, 0.3);
         transition: all 0.3s ease;
         width: 100%;
         font-size: 16px;
     }
     .stButton>button:hover {
         background: linear-gradient(135deg, #003a61 0%, #005c93 100%) !important;
-        box-shadow: 0 6px 20px rgba(0, 79, 132, 0.6);
         transform: translateY(-2px);
     }
     
-    [data-testid="stSidebar"] {
-        background-color: #004F84 !important;
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    [data-testid="stSidebar"] * {
-        color: #ffffff !important;
-    }
-    
-    /* Исправление черной полосы прогресс-бара */
-    .stProgress > div > div {
-        background-color: rgba(255, 255, 255, 0.3) !important;
-        border-radius: 10px;
-    }
-    .stProgress > div > div > div > div {
-        background: linear-gradient(90deg, #004F84, #10b981);
-        border-radius: 10px;
-    }
-    
-    /* Красивые раздельные блоки для вариантов ответов с четким темным текстом */
+    /* Стиль радиокнопок ответов, адаптирующийся под тему */
     .stRadio div[role="radiogroup"] > label {
-        background-color: #ffffff !important;
-        padding: 14px 18px !important;
+        padding: 12px 16px !important;
         border-radius: 12px !important;
-        margin-bottom: 12px !important;
-        border: 1px solid #e2e8f0 !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        margin-bottom: 10px !important;
+        border: 1px solid rgba(128, 128, 128, 0.2) !important;
         transition: all 0.2s ease;
     }
     .stRadio div[role="radiogroup"] > label:hover {
-        background-color: #f8fafc !important;
         border-color: #004F84 !important;
     }
-    /* Текст внутри вариантов ответа — темно-серый для отличной читаемости */
-    .stRadio div[role="radiogroup"] > label p,
-    .stRadio div[role="radiogroup"] > label span {
-        color: #1e293b !important;
-        font-weight: 500;
-    }
     
+    /* Блоки пояснений */
     .exp-correct {
-        background-color: #f0fdf4 !important;
-        border-left: 6px solid #22c55e;
-        padding: 16px;
-        border-radius: 10px;
-        color: #166534 !important;
+        background-color: rgba(34, 197, 94, 0.1) !important;
+        border-left: 5px solid #22c55e;
+        padding: 14px;
+        border-radius: 8px;
         margin-top: 15px;
-        font-size: 15px;
     }
-    .exp-correct * {
-        color: #166534 !important;
-    }
-    
     .exp-wrong {
-        background-color: #fef2f2 !important;
-        border-left: 6px solid #ef4444;
-        padding: 16px;
-        border-radius: 10px;
-        color: #991b1b !important;
+        background-color: rgba(239, 68, 68, 0.1) !important;
+        border-left: 5px solid #ef4444;
+        padding: 14px;
+        border-radius: 8px;
         margin-top: 15px;
-        font-size: 15px;
-    }
-    .exp-wrong * {
-        color: #991b1b !important;
     }
     </style>
 """,
@@ -464,8 +416,7 @@ def save_to_github(row_data):
 
 
 # --- БЛОК АДМИНИСТРАТОРА В БОКОВОЙ ПАНЕЛИ ---
-st.sidebar.markdown("---")
-st.sidebar.subheader("👨‍💻 Панель руководителя")
+st.sidebar.markdown("### 👨‍💻 Панель руководителя")
 
 if "admin_logged_in" not in st.session_state:
   st.session_state.admin_logged_in = False
@@ -550,25 +501,25 @@ if "answered" not in st.session_state:
 
 # --- ШАГ 1: РЕГИСТРАЦИЯ ---
 if st.session_state.step == "register":
-  col1, col2, col3 = st.columns([1, 2, 1])
-  with col2:
-    st.image(LOGO_URL, use_container_width=True)
-
+  # Красивая карточка с белым фоном специально для логотипа
   st.markdown(
-      "<div style='text-align: center; padding: 5px 0 15px"
-      " 0;'><h1"
-      " style='color:white;font-weight:800;letter-spacing:-0.5px;margin-bottom:5px;'>ЗДОРОВЬЕ"
-      " И БЕЗОПАСНОСТЬ</h1><p"
-      " style='color:rgba(255,255,255,0.9);'>Модуль интерактивной проверки"
-      " знаний</p></div>",
+      f"<div class='logo-container'><img src='{LOGO_URL}'"
+      " style='width: 100%; max-width: 180px;'></div>",
       unsafe_allow_html=True,
   )
 
   st.markdown(
-      "<h3 style='color:white; margin-bottom: 5px;'>📝 Регистрация"
-      " сотрудника</h3><p style='margin-bottom:20px;"
-      " color:rgba(255,255,255,0.8);'>Представьтесь, чтобы зафиксировать"
-      " прохождение теста в журнале.</p>",
+      "<div style='text-align: center; margin-bottom: 25px;'><h1"
+      " style='font-weight:800;letter-spacing:-0.5px;margin-bottom:5px;'>ЗДОРОВЬЕ"
+      " И БЕЗОПАСНОСТЬ</h1><p"
+      " style='opacity: 0.8;'>Модуль интерактивной проверки знаний</p></div>",
+      unsafe_allow_html=True,
+  )
+
+  st.markdown("### 📝 Регистрация сотрудника")
+  st.markdown(
+      "<p style='opacity: 0.7; margin-bottom:20px;'>Представьтесь, чтобы"
+      " зафиксировать прохождение теста в журнале.</p>",
       unsafe_allow_html=True,
   )
 
@@ -622,8 +573,7 @@ elif st.session_state.step == "quiz":
   st.progress((q_idx) / total_q)
 
   st.markdown(
-      f"<h3 style='margin: 20px 0; color: #ffffff !important; font-weight:"
-      f" 600;'>{q_data['question']}</h3>",
+      f"<h3 style='margin: 20px 0; font-weight: 600;'>{q_data['question']}</h3>",
       unsafe_allow_html=True,
   )
 
@@ -714,12 +664,11 @@ elif st.session_state.step == "result":
       unsafe_allow_html=True,
   )
   st.markdown(
-      f"<h3 style='color:white;'>Сотрудник: {st.session_state.name}"
-      f" ({st.session_state.position})</h3>",
+      f"<h3>Сотрудник: {st.session_state.name} ({st.session_state.position})</h3>",
       unsafe_allow_html=True,
   )
   st.markdown(
-      f"<p style='color:white;'>Попытка: №{st.session_state.attempt}</p>",
+      f"<p style='opacity: 0.8;'>Попытка: №{st.session_state.attempt}</p>",
       unsafe_allow_html=True,
   )
 
@@ -730,8 +679,8 @@ elif st.session_state.step == "result":
       unsafe_allow_html=True,
   )
   st.markdown(
-      f"<p style='font-size: 18px; color:white;'>Правильных ответов:"
-      f" <strong>{score} из {total}</strong></p>",
+      f"<p style='font-size: 18px;'>Правильных ответов: <strong>{score} из"
+      f" {total}</strong></p>",
       unsafe_allow_html=True,
   )
 
@@ -756,7 +705,7 @@ elif st.session_state.step == "result":
         f" {int(total * 0.8)} правильных ответов)."
     )
     st.markdown(
-        "<p style='color:white;'>Изучите материал еще раз и повторите"
+        "<p style='opacity: 0.8;'>Изучите материал еще раз и повторите"
         " попытку.</p>",
         unsafe_allow_html=True,
     )
