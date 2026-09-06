@@ -295,22 +295,17 @@ st.markdown(
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     header {visibility: hidden;}
-    .card-container {
-        background-color: #ffffff;
-        padding: 35px;
-        border-radius: 16px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-        color: #1e293b !important;
-        margin-top: 15px;
-        margin-bottom: 20px;
+    
+    /* Универсальный стиль текста для всех элементов интерфейса */
+    p, span, label, div, h1, h2, h3, h4, .stRadio label {
+        color: #ffffff !important;
     }
-    .card-container, .card-container p, .card-container span, .card-container label, .card-container div, .card-container h1, .card-container h2, .card-container h3, .card-container h4, .stRadio label {
-        color: #1e293b !important;
-    }
+    
     .stMarkdown p {
         color: rgba(255, 255, 255, 0.95) !important;
         font-size: 16px;
     }
+    
     input[type="text"], input {
         background-color: #f8fafc !important;
         color: #1e293b !important;
@@ -319,6 +314,7 @@ st.markdown(
         border-radius: 10px !important;
         font-size: 16px !important;
     }
+    
     .step-badge {
         display: inline-block;
         background: linear-gradient(135deg, #004F84 0%, #0072b1 100%);
@@ -330,6 +326,7 @@ st.markdown(
         box-shadow: 0 4px 10px rgba(0, 79, 132, 0.3);
         margin-bottom: 10px;
     }
+    
     .stButton>button {
         background: linear-gradient(135deg, #004F84 0%, #0072b1 100%) !important;
         color: white !important;
@@ -347,6 +344,7 @@ st.markdown(
         box-shadow: 0 6px 20px rgba(0, 79, 132, 0.6);
         transform: translateY(-2px);
     }
+    
     [data-testid="stSidebar"] {
         background-color: #004F84 !important;
         border-right: 1px solid rgba(255, 255, 255, 0.1);
@@ -354,24 +352,38 @@ st.markdown(
     [data-testid="stSidebar"] * {
         color: #ffffff !important;
     }
+    
+    /* Исправление черной полосы прогресс-бара */
+    .stProgress > div > div {
+        background-color: rgba(255, 255, 255, 0.3) !important;
+        border-radius: 10px;
+    }
     .stProgress > div > div > div > div {
         background: linear-gradient(90deg, #004F84, #10b981);
         border-radius: 10px;
     }
-    /* Стили для разделения вариантов ответов */
+    
+    /* Красивые раздельные блоки для вариантов ответов с четким темным текстом */
     .stRadio div[role="radiogroup"] > label {
-        background-color: #f8fafc !important;
-        padding: 12px 16px !important;
-        border-radius: 10px !important;
+        background-color: #ffffff !important;
+        padding: 14px 18px !important;
+        border-radius: 12px !important;
         margin-bottom: 12px !important;
         border: 1px solid #e2e8f0 !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         transition: all 0.2s ease;
     }
     .stRadio div[role="radiogroup"] > label:hover {
-        background-color: #f1f5f9 !important;
-        border-color: #0072b1 !important;
+        background-color: #f8fafc !important;
+        border-color: #004F84 !important;
     }
+    /* Текст внутри вариантов ответа — темно-серый для отличной читаемости */
+    .stRadio div[role="radiogroup"] > label p,
+    .stRadio div[role="radiogroup"] > label span {
+        color: #1e293b !important;
+        font-weight: 500;
+    }
+    
     .exp-correct {
         background-color: #f0fdf4 !important;
         border-left: 6px solid #22c55e;
@@ -381,6 +393,10 @@ st.markdown(
         margin-top: 15px;
         font-size: 15px;
     }
+    .exp-correct * {
+        color: #166534 !important;
+    }
+    
     .exp-wrong {
         background-color: #fef2f2 !important;
         border-left: 6px solid #ef4444;
@@ -389,6 +405,9 @@ st.markdown(
         color: #991b1b !important;
         margin-top: 15px;
         font-size: 15px;
+    }
+    .exp-wrong * {
+        color: #991b1b !important;
     }
     </style>
 """,
@@ -531,24 +550,25 @@ if "answered" not in st.session_state:
 
 # --- ШАГ 1: РЕГИСТРАЦИЯ ---
 if st.session_state.step == "register":
-  # Вывод логотипа компании по ссылке
   col1, col2, col3 = st.columns([1, 2, 1])
   with col2:
     st.image(LOGO_URL, use_container_width=True)
 
   st.markdown(
-      "<div style='text-align: center; padding: 5px 0 10px"
+      "<div style='text-align: center; padding: 5px 0 15px"
       " 0;'><h1"
       " style='color:white;font-weight:800;letter-spacing:-0.5px;margin-bottom:5px;'>ЗДОРОВЬЕ"
-      " И БЕЗОПАСНОСТЬ</h1><p>Модуль интерактивной проверки знаний</p></div>",
+      " И БЕЗОПАСНОСТЬ</h1><p"
+      " style='color:rgba(255,255,255,0.9);'>Модуль интерактивной проверки"
+      " знаний</p></div>",
       unsafe_allow_html=True,
   )
 
-  st.markdown('<div class="card-container">', unsafe_allow_html=True)
   st.markdown(
-      "<h3>📝 Регистрация сотрудника</h3><p"
-      " style='margin-bottom:20px;color:#64748b;'>Представьтесь, чтобы"
-      " зафиксировать прохождение теста в журнале.</p>",
+      "<h3 style='color:white; margin-bottom: 5px;'>📝 Регистрация"
+      " сотрудника</h3><p style='margin-bottom:20px;"
+      " color:rgba(255,255,255,0.8);'>Представьтесь, чтобы зафиксировать"
+      " прохождение теста в журнале.</p>",
       unsafe_allow_html=True,
   )
 
@@ -576,7 +596,6 @@ if st.session_state.step == "register":
         st.session_state.score = 0
         st.session_state.answered = False
         st.rerun()
-  st.markdown("</div>", unsafe_allow_html=True)
 
 # --- ШАГ 2: ПРОХОЖДЕНИЕ ТЕСТА ---
 elif st.session_state.step == "quiz":
@@ -602,10 +621,9 @@ elif st.session_state.step == "quiz":
   )
   st.progress((q_idx) / total_q)
 
-  st.markdown('<div class="card-container">', unsafe_allow_html=True)
   st.markdown(
-      f"<h3 style='margin-bottom: 20px; color: #1e293b !important;'>"
-      f"{q_data['question']}</h3>",
+      f"<h3 style='margin: 20px 0; color: #ffffff !important; font-weight:"
+      f" 600;'>{q_data['question']}</h3>",
       unsafe_allow_html=True,
   )
 
@@ -684,7 +702,6 @@ elif st.session_state.step == "quiz":
 
         st.session_state.step = "result"
       st.rerun()
-  st.markdown("</div>", unsafe_allow_html=True)
 
 # --- ШАГ 3: РЕЗУЛЬТАТЫ ---
 elif st.session_state.step == "result":
@@ -696,11 +713,15 @@ elif st.session_state.step == "result":
       "<div class='step-badge'>ИТОГИ ТЕСТИРОВАНИЯ</div>",
       unsafe_allow_html=True,
   )
-  st.markdown('<div class="card-container">', unsafe_allow_html=True)
   st.markdown(
-      f"**Сотрудник:** {st.session_state.name} ({st.session_state.position})"
+      f"<h3 style='color:white;'>Сотрудник: {st.session_state.name}"
+      f" ({st.session_state.position})</h3>",
+      unsafe_allow_html=True,
   )
-  st.markdown(f"**Попытка:** №{st.session_state.attempt}")
+  st.markdown(
+      f"<p style='color:white;'>Попытка: №{st.session_state.attempt}</p>",
+      unsafe_allow_html=True,
+  )
 
   color_code = "#10b981" if percent >= 80 else "#ef4444"
   st.markdown(
@@ -709,8 +730,8 @@ elif st.session_state.step == "result":
       unsafe_allow_html=True,
   )
   st.markdown(
-      f"<p style='font-size: 18px;'>Правильных ответов: <strong>{score} из"
-      f" {total}</strong></p>",
+      f"<p style='font-size: 18px; color:white;'>Правильных ответов:"
+      f" <strong>{score} из {total}</strong></p>",
       unsafe_allow_html=True,
   )
 
@@ -734,7 +755,11 @@ elif st.session_state.step == "result":
         "⚠️ Тест не пройден. Требуется набрать от 80% (минимум"
         f" {int(total * 0.8)} правильных ответов)."
     )
-    st.markdown("Изучите материал еще раз и повторите попытку.")
+    st.markdown(
+        "<p style='color:white;'>Изучите материал еще раз и повторите"
+        " попытку.</p>",
+        unsafe_allow_html=True,
+    )
     st.markdown("<br>", unsafe_allow_html=True)
 
     if st.button("Пройти тест заново 🔄"):
@@ -745,4 +770,3 @@ elif st.session_state.step == "result":
       st.session_state.selected_option = None
       st.session_state.step = "quiz"
       st.rerun()
-  st.markdown("</div>", unsafe_allow_html=True)
