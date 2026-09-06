@@ -411,10 +411,10 @@ def save_to_github(row_data):
     new_row_str = ",".join([str(val) for val in row_data]) + "\n"
     csv_content += new_row_str
 
-    # 3. Кодируем и отправляем обновленный файл обратно на GitHub
-    content_encoded = base64.b64encode(csv_content.encode("utf-8")).decode(
-        "utf-8"
-    )
+   # 3. Кодируем с BOM для корректного отображения кириллицы в Excel
+    content_encoded = base64.b64encode(
+        csv_content.encode('utf-8-sig')
+    ).decode('utf-8')
     data = {
         "message": "Update test results",
         "content": content_encoded,
