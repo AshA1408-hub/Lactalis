@@ -302,7 +302,7 @@ st.markdown(
         margin-bottom: 12px;
     }
     
-    /* Контейнер для логотипа с безупречным белым фоном */
+    /* Контейнер для логотипа с белым фоном */
     .logo-container {
         background-color: #ffffff;
         padding: 20px;
@@ -333,7 +333,7 @@ st.markdown(
         transform: translateY(-2px);
     }
     
-    /* Стиль радиокнопок ответов, адаптирующийся под тему */
+    /* Стиль радиокнопок */
     .stRadio div[role="radiogroup"] > label {
         padding: 12px 16px !important;
         border-radius: 12px !important;
@@ -375,10 +375,12 @@ def save_to_github(row_data):
     g = Github(token)
     repo = g.get_repo(repo_name)
 
+    # Обновленный список колонок с учетом города
     columns = [
         "Timestamp",
         "Имя",
         "Должность",
+        "Город",
         "Попытка",
         "Правильных ответов",
         "Всего",
@@ -391,6 +393,11 @@ def save_to_github(row_data):
       sha = file_content.sha
       existing_data = file_content.decoded_content.decode("utf-8-sig")
       df = pd.read_csv(StringIO(existing_data))
+      
+      # Если старый CSV файл не содержал колонку "Город", добавляем её во избежание сбоев
+      if "Город" not in df.columns:
+        df.insert(3, "Город", "Не указан")
+        
     except Exception:
       sha = None
       df = pd.DataFrame(columns=columns)
@@ -398,13 +405,12 @@ def save_to_github(row_data):
     new_row_df = pd.DataFrame([row_data], columns=columns)
     df = pd.concat([df, new_row_df], ignore_index=True)
 
-    # Передаем обычный текст CSV напрямую — PyGithub упакует его корректно
     csv_content = df.to_csv(index=False, encoding="utf-8-sig")
 
     if sha:
-      repo.update_file(path, "Update test results", csv_content, sha)
+      repo.update_file(path, "Update test results with city", csv_content, sha)
     else:
-      repo.create_file(path, "Create test results", csv_content)
+      repo.create_file(path, "Create test results with city", csv_content)
 
     return True
   except Exception as e:
@@ -453,7 +459,12 @@ if st.session_state.admin_logged_in:
 
     df = pd.read_csv(StringIO(data))
 
-    # Кнопка полной очистки файла results.csv
+    # Корректировка старых таблиц при чтении, если там нет столбца Город
+    if "Город" not in df.columns and "Должность" in df.columns:
+      col_idx = df.columns.get_loc("Должность") + 1
+      df.insert(col_idx, "Город", "Не указан")
+
+    # Кнопка очистки файла results.csv
     with st.expander("🗑️ Управление данными (Удаление)"):
       st.warning("Внимание! Это действие полностью очистит журнал результатов.")
       if st.button("❌ Очистить все результаты"):
@@ -461,6 +472,7 @@ if st.session_state.admin_logged_in:
             "Timestamp",
             "Имя",
             "Должность",
+            "Город",
             "Попытка",
             "Правильных ответов",
             "Всего",
@@ -479,7 +491,7 @@ if st.session_state.admin_logged_in:
         st.success("Все данные успешно удалены!")
         st.rerun()
 
-    search_query = st.text_input("🔍 Поиск по ФИО или должности")
+    search_query = st.text_input("🔍 Поиск по ФИО, должности или городу")
     if search_query:
       df = df[
           df.astype(str)
@@ -491,7 +503,7 @@ if st.session_state.admin_logged_in:
 
     st.dataframe(df, use_container_width=True)
 
-    csv_data = df.to_csv(index=False).encode("utf-8-sig")
+    csv_data = df.to_csv(index=False, encoding="utf-8-sig").encode("utf-8-sig")
     st.download_button(
         label="📥 Скачать отчет в формате CSV (Excel)",
         data=csv_data,
@@ -511,6 +523,8 @@ if "name" not in st.session_state:
   st.session_state.name = ""
 if "position" not in st.session_state:
   st.session_state.position = ""
+if "city" not in st.session_state:
+  st.session_state.city = ""
 if "attempt" not in st.session_state:
   st.session_state.attempt = 1
 if "current_q" not in st.session_state:
@@ -524,7 +538,6 @@ if "answered" not in st.session_state:
 
 # --- ШАГ 1: РЕГИСТРАЦИЯ ---
 if st.session_state.step == "register":
-  # Красивая карточка с белым фоном специально для логотипа
   st.markdown(
       f"<div class='logo-container'><img src='{LOGO_URL}'"
       " style='width: 100%; max-width: 180px;'></div>",
@@ -541,8 +554,8 @@ if st.session_state.step == "register":
 
   st.markdown("### 📝 Регистрация сотрудника")
   st.markdown(
-      "<p style='opacity: 0.7; margin-bottom:20px;'>Представьтесь, чтобы"
-      " зафиксировать прохождение теста в журнале.</p>",
+      "<p style='opacity: 0.7; margin-bottom:20px;'>Заполните данные для"
+      " фиксации прохождения теста в журнале.</p>",
       unsafe_allow_html=True,
   )
 
@@ -557,14 +570,20 @@ if st.session_state.step == "register":
         value=st.session_state.position,
         placeholder="Оператор / Инженер / Специалист",
     )
+    city_input = st.text_input(
+        "Город / Филиал:",
+        value=st.session_state.city,
+        placeholder="Москва / Рубцовск / Ефремов",
+    )
     submitted = st.form_submit_button("Начать тестирование ➔")
 
     if submitted:
-      if not name_input.strip() or not position_input.strip():
-        st.error("⚠️ Пожалуйста, заполните оба поля: ФИО и должность.")
+      if not name_input.strip() or not position_input.strip() or not city_input.strip():
+        st.error("⚠️ Пожалуйста, заполните все поля: ФИО, должность и город.")
       else:
         st.session_state.name = name_input.strip()
         st.session_state.position = position_input.strip()
+        st.session_state.city = city_input.strip()
         st.session_state.step = "quiz"
         st.session_state.current_q = 0
         st.session_state.score = 0
@@ -577,6 +596,7 @@ elif st.session_state.step == "quiz":
     st.markdown("### 👤 Ваш профиль")
     st.markdown(f"**ФИО:** {st.session_state.name}")
     st.markdown(f"**Должность:** {st.session_state.position}")
+    st.markdown(f"**Город:** {st.session_state.city}")
     st.markdown(f"**Попытка:** №{st.session_state.attempt}")
     st.markdown("---")
     st.info(
@@ -664,6 +684,7 @@ elif st.session_state.step == "quiz":
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             st.session_state.name,
             st.session_state.position,
+            st.session_state.city,
             str(st.session_state.attempt),
             str(score),
             str(total),
@@ -687,7 +708,7 @@ elif st.session_state.step == "result":
       unsafe_allow_html=True,
   )
   st.markdown(
-      f"<h3>Сотрудник: {st.session_state.name} ({st.session_state.position})</h3>",
+      f"<h3>Сотрудник: {st.session_state.name} ({st.session_state.position}, г. {st.session_state.city})</h3>",
       unsafe_allow_html=True,
   )
   st.markdown(
