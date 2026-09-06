@@ -2,7 +2,85 @@ from datetime import datetime
 import base64
 import requests
 import streamlit as st
+import pandas as pd
+import streamlit as st
+from github import Github
 
+# --- БЛОК АДМИНИСТРАТОРА В БОКОВОЙ ПАНЕЛИ ---
+st.sidebar.markdown('---')
+st.sidebar.subheader('👨‍💻 Панель руководителя')
+
+# Проверка, введен ли уже пароль
+if 'admin_logged_in' not in st.session_state:
+  st.session_state.admin_logged_in = False
+
+if not st.session_state.admin_logged_in:
+  password_input = st.sidebar.text_input('Введите пароль', type='password')
+  if st.sidebar.button('Войти'):
+    # Читаем пароль из секретов Streamlit
+    admin_pass = (
+        st.secrets['admin']['password']
+        if 'admin' in st.secrets and 'password' in st.secrets['admin']
+        else '12345'
+    )
+    if password_input == admin_pass:
+      st.session_state.admin_logged_in = True
+      st.sidebar.success('Успешный вход!')
+      st.rerun()
+    else:
+      st.sidebar.error('Неверный пароль')
+else:
+  if st.sidebar.button('Выйти из кабинета'):
+    st.session_state.admin_logged_in = False
+    st.rerun()
+
+  st.sidebar.success('Доступ разрешен')
+
+# --- ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ ДЛЯ АДМИНА ---
+if st.session_state.admin_logged_in:
+  st.header('📊 Сводная таблица результатов тестирования')
+
+  try:
+    # Подключаемся к GitHub и скачиваем актуальный results.csv
+    token = st.secrets['github']['token']
+    repo_name = st.secrets['github']['repo']
+
+    g = Github(token)
+    repo = g.get_repo(repo_name)
+    file_content = repo.get_contents('results.csv')
+    data = file_content.decoded_content.decode('utf-8')
+
+    # Превращаем в DataFrame
+    from io import StringIO
+
+    df = pd.read_csv(StringIO(data))
+
+    # Красивые фильтры и поисковая строка
+    search_query = st.text_input('🔍 Поиск по ФИО или должности')
+    if search_query:
+      df = df[
+          df.astype(str)
+          .apply(lambda row: row.str.contains(search_query, case=False).any(),
+                 axis=1)
+      ]
+
+    # Показываем интерактивную таблицу
+    st.dataframe(df, use_container_width=True)
+
+    # Кнопка для скачивания отчета
+    csv_data = df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        label='📥 Скачать отчет в формате CSV (Excel)',
+        data=csv_data,
+        file_name='results_report.csv',
+        mime='text/csv',
+    )
+
+  except Exception as e:
+    st.info(
+        'Файл результатов (`results.csv`) пока пуст или еще не создан. Как'
+        ' только кто-то пройдет тест, здесь появится таблица.'
+    )
 
 # --- СОХРАНЕНИЕ В CSV НА GITHUB ---
 def save_to_github(row_data):
