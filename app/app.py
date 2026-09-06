@@ -1,5 +1,4 @@
 from datetime import datetime
-import base64
 from io import StringIO
 import requests
 import streamlit as st
@@ -399,15 +398,13 @@ def save_to_github(row_data):
     new_row_df = pd.DataFrame([row_data], columns=columns)
     df = pd.concat([df, new_row_df], ignore_index=True)
 
+    # Передаем обычный текст CSV напрямую — PyGithub упакует его корректно
     csv_content = df.to_csv(index=False, encoding="utf-8-sig")
-    content_encoded = base64.b64encode(csv_content.encode("utf-8-sig")).decode(
-        "utf-8"
-    )
 
     if sha:
-      repo.update_file(path, "Update test results", content_encoded, sha)
+      repo.update_file(path, "Update test results", csv_content, sha)
     else:
-      repo.create_file(path, "Create test results", content_encoded)
+      repo.create_file(path, "Create test results", csv_content)
 
     return True
   except Exception as e:
@@ -455,6 +452,32 @@ if st.session_state.admin_logged_in:
     data = file_content.decoded_content.decode("utf-8-sig")
 
     df = pd.read_csv(StringIO(data))
+
+    # Кнопка полной очистки файла results.csv
+    with st.expander("🗑️ Управление данными (Удаление)"):
+      st.warning("Внимание! Это действие полностью очистит журнал результатов.")
+      if st.button("❌ Очистить все результаты"):
+        columns = [
+            "Timestamp",
+            "Имя",
+            "Должность",
+            "Попытка",
+            "Правильных ответов",
+            "Всего",
+            "Процент",
+            "Статус",
+        ]
+        empty_df = pd.DataFrame(columns=columns)
+        empty_csv = empty_df.to_csv(index=False, encoding="utf-8-sig")
+
+        repo.update_file(
+            "results.csv",
+            "Clear all test results",
+            empty_csv,
+            file_content.sha,
+        )
+        st.success("Все данные успешно удалены!")
+        st.rerun()
 
     search_query = st.text_input("🔍 Поиск по ФИО или должности")
     if search_query:
