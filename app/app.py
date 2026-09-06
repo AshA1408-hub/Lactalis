@@ -188,7 +188,7 @@ QUESTIONS = [
             ),
             (
                 "Запрещено наличие накладных ресниц, длинных ногтей, украшений"
-                " (колец, серег, браслетов), часов, а также вход в линзах (нужно"
+                " (колец, серег, браслетов), часов, а также вход в линзы (нужно"
                 " надеть обычные очки)"
             ),
             (
@@ -378,52 +378,45 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# --- СОХРАНЕНИЕ В CSV НА GITHUB ---
+# --- СОХРАНЕНИЕ В CSV НА GITHUB ЧЕРЕЗ PANDAS ---
 def save_to_github(row_data):
   try:
     token = st.secrets["github"]["token"]
-    repo = st.secrets["github"]["repo"]
+    repo_name = st.secrets["github"]["repo"]
     path = "results.csv"
 
-    url = f"https://api.github.com/repos/{repo}/contents/{path}"
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github+json",
-    }
+    g = Github(token)
+    repo = g.get_repo(repo_name)
 
-    # 1. Получаем текущий файл из репозитория (если он есть)
-    response = requests.get(url, headers=headers)
-    csv_content = ""
-    sha = None
+    columns = ["Timestamp", "Имя", "Должность", "Попытка", "Правильных ответов", "Всего", "Процент", "Статус"]
+    
+    # Пытаемся получить существующий файл
+    try:
+      file_content = repo.get_contents(path)
+      sha = file_content.sha
+      existing_data = file_content.decoded_content.decode("utf-8-sig")
+      df = pd.read_csv(StringIO(existing_data))
+    except Exception:
+      sha = None
+      df = pd.DataFrame(columns=columns)
 
-    if response.status_code == 200:
-      file_data = response.json()
-      sha = file_data["sha"]
-      csv_content = base64.b64decode(file_data["content"]).decode("utf-8")
+    # Добавляем новую строчку через DataFrame, чтобы избежать сбоев разделителей
+    new_row_df = pd.DataFrame([row_data], columns=columns)
+    df = pd.concat([df, new_row_df], ignore_index=True)
+
+    # Конвертируем обратно в CSV текст с правильной кодировкой
+    csv_content = df.to_csv(index=False, encoding="utf-8-sig")
+
+    content_encoded = base64.b64encode(csv_content.encode("utf-8-sig")).decode("utf-8")
+
+    if sha:
+      repo.update_file(path, "Update test results", content_encoded, sha)
     else:
-      # Если файла еще нет, создаем шапку таблицы
-      csv_content = (
-          "Timestamp,Имя,Должность,Попытка,Правильных"
-          " ответов,Всего,Процент,Статус\n"
-      )
+      repo.create_file(path, "Create test results", content_encoded)
 
-    # 2. Добавляем новую строчку
-    new_row_str = ",".join([str(val) for val in row_data]) + "\n"
-    csv_content += new_row_str
-
-   # 3. Кодируем с BOM для корректного отображения кириллицы в Excel
-    content_encoded = base64.b64encode(
-        csv_content.encode('utf-8-sig')
-    ).decode('utf-8')
-    data = {
-        "message": "Update test results",
-        "content": content_encoded,
-        "sha": sha,  # Если sha равен None, файл создастся автоматически
-    }
-
-    put_response = requests.put(url, headers=headers, json=data)
-    return put_response.status_code in [200, 201]
-  except Exception:
+    return True
+  except Exception as e:
+    print(e)
     return False
 
 
@@ -431,14 +424,12 @@ def save_to_github(row_data):
 st.sidebar.markdown('---')
 st.sidebar.subheader('👨‍💻 Панель руководителя')
 
-# Проверка, введен ли уже пароль
 if 'admin_logged_in' not in st.session_state:
   st.session_state.admin_logged_in = False
 
 if not st.session_state.admin_logged_in:
   password_input = st.sidebar.text_input('Введите пароль', type='password')
   if st.sidebar.button('Войти'):
-    # Читаем пароль из секретов Streamlit
     admin_pass = (
         st.secrets['admin']['password']
         if 'admin' in st.secrets and 'password' in st.secrets['admin']
@@ -462,19 +453,16 @@ if st.session_state.admin_logged_in:
   st.header('📊 Сводная таблица результатов тестирования')
 
   try:
-    # Подключаемся к GitHub и скачиваем актуальный results.csv
     token = st.secrets['github']['token']
     repo_name = st.secrets['github']['repo']
 
     g = Github(token)
     repo = g.get_repo(repo_name)
     file_content = repo.get_contents('results.csv')
-    data = file_content.decoded_content.decode('utf-8')
+    data = file_content.decoded_content.decode('utf-8-sig')
 
-    # Превращаем в DataFrame
-    df = pd.read_csv(StringIO(data), encoding='utf-8-sig')
+    df = pd.read_csv(StringIO(data))
 
-    # Красивые фильтры и поисковая строка
     search_query = st.text_input('🔍 Поиск по ФИО или должности')
     if search_query:
       df = df[
@@ -483,11 +471,9 @@ if st.session_state.admin_logged_in:
                  axis=1)
       ]
 
-    # Показываем интерактивную таблицу
     st.dataframe(df, use_container_width=True)
 
-    # Кнопка для скачивания отчета
-    csv_data = df.to_csv(index=False).encode('utf-8')
+    csv_data = df.to_csv(index=False).encode('utf-8-sig')
     st.download_button(
         label='📥 Скачать отчет в формате CSV (Excel)',
         data=csv_data,
@@ -664,7 +650,6 @@ elif st.session_state.step == "quiz":
             status,
         ]
 
-        # Запись в GitHub репозиторий
         save_to_github(row_data)
 
         st.session_state.step = "result"
